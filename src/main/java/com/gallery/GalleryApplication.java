@@ -23,9 +23,9 @@ import java.util.List;
 public class GalleryApplication {
 
     // ============================================================
-    //  📌 配置区（改这里就行）
+    //  📌 配置区
     // ============================================================
-    private static final String PASSWORD = "1234";   // 密码改这里
+    private static final String PASSWORD = "1234";
     private static final String IMAGE_DIR = "src/main/resources/static/images/";
 
     public static void main(String[] args) {
@@ -133,6 +133,7 @@ public class GalleryApplication {
 
         html.append("<a href='/logout' class='logout'>🚪 退出</a>");
         html.append("</body></html>");
+        return html.toString();
     }
 
     private List<String> getImageList() {
