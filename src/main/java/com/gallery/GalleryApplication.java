@@ -4,6 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.ResponseEntity;
@@ -131,7 +133,6 @@ public class GalleryApplication {
 
         html.append("<a href='/logout' class='logout'>🚪 退出</a>");
         html.append("</body></html>");
-        return html.toString();
     }
 
     private List<String> getImageList() {
