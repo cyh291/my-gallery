@@ -7,9 +7,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 @SpringBootApplication
 @RestController
@@ -21,16 +18,11 @@ public class GalleryApplication {
         SpringApplication.run(GalleryApplication.class, args);
     }
 
-    // ============================================================
-    //  首页：直接展示图片，不跳转！
-    // ============================================================
     @GetMapping("/")
     public String home(HttpSession session) {
-        // 如果没登录，显示密码输入框
         if (session.getAttribute("login") == null) {
             return loginPage();
         }
-        // 已登录，直接显示图片页面
         return galleryPage();
     }
 
@@ -43,7 +35,7 @@ public class GalleryApplication {
     public String check(@RequestParam String pwd, HttpSession session) {
         if (PASSWORD.equals(pwd)) {
             session.setAttribute("login", true);
-            return galleryPage();  // ← 直接用 galleryPage()，不用 redirect
+            return galleryPage();
         }
         return loginPageHtml("❌ 密码错误");
     }
@@ -54,9 +46,6 @@ public class GalleryApplication {
         return loginPageHtml(null);
     }
 
-    // ============================================================
-    //  密码页面
-    // ============================================================
     private String loginPageHtml(String error) {
         String err = error != null ? "<div style='color:#f87171;margin-top:14px'>" + error + "</div>" : "";
         return "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>密码验证</title>" +
@@ -80,51 +69,48 @@ public class GalleryApplication {
     }
 
     // ============================================================
-    //  图片展示页面（直接用 HTML 写死图片列表）
+    //  📸 图片展示页面
+    //  改这里：把 photo1.jpg 改成您的图片文件名
     // ============================================================
     private String galleryPage() {
-        // 获取图片列表
-        String path = "src/main/resources/static/images/";
-        List<String> images = new ArrayList<>();
-        File dir = new File(path);
-        if (dir.exists() && dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    if (f.isFile()) {
-                        images.add(f.getName());
-                    }
-                }
-            }
-        }
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>图片展示</title>" +
+               "<style>" +
+               "body{background:#0f172a;color:#fff;font-family:system-ui;padding:30px;text-align:center;margin:0}" +
+               "h1{font-size:28px;font-weight:500;margin-bottom:20px}" +
+               ".gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;max-width:1000px;margin:0 auto}" +
+               ".card{background:rgba(255,255,255,0.05);border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.06)}" +
+               ".card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}" +
+               ".logout{display:inline-block;margin-top:30px;padding:10px 30px;background:#ef4444;color:#fff;border-radius:30px;text-decoration:none}" +
+               "</style></head><body>" +
+               "<h1>📸 图片展示</h1>" +
+               "<div class='gallery'>" +
+               // ═══════════════════════════════════════════════════════
+               //  👇 改这里：把 photo1.jpg 改成您的图片文件名
+               //  要加图片就复制一行，改文件名
+               // ═══════════════════════════════════════════════════════
+              "<div class='card'><img src='/images/jtz.jpg'></div>" +
+               "<div class='card'><img src='/images/oncjr.jpg'></div>" +
+               "<div class='card'><img src='/images/onfzy.jpg'></div>" +
+               "<div class='card'><img src='/images/onzt.jpg'></div>" +
 
-        StringBuilder html = new StringBuilder();
-        html.append("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>图片展示</title>");
-        html.append("<style>");
-        html.append("body{background:#0f172a;color:#fff;font-family:system-ui;padding:30px;text-align:center;margin:0}");
-        html.append("h1{font-size:28px;font-weight:500;margin-bottom:20px}");
-        html.append(".gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;max-width:1000px;margin:0 auto}");
-        html.append(".card{background:rgba(255,255,255,0.05);border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.06)}");
-        html.append(".card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}");
-        html.append(".empty{color:#64748b;padding:60px 20px;font-size:18px}");
-        html.append(".logout{display:inline-block;margin-top:30px;padding:10px 30px;background:#ef4444;color:#fff;border-radius:30px;text-decoration:none}");
-        html.append("</style></head><body>");
-        html.append("<h1>📸 图片展示</h1>");
 
-        if (images.isEmpty()) {
-            html.append("<div class='empty'>📭 暂无图片<br>请把图片放到 <code>src/main/resources/static/images/</code></div>");
-        } else {
-            html.append("<div class='gallery'>");
-            for (String img : images) {
-                html.append("<div class='card'>");
-                html.append("<img src='/images/").append(img).append("' alt='").append(img).append("'>");
-                html.append("</div>");
-            }
-            html.append("</div>");
-        }
 
-        html.append("<a href='/logout' class='logout'>🚪 退出</a>");
-        html.append("</body></html>");
-        return html.toString();
+
+
+
+
+               // ══════════════════════════════════ ═════════════════════
+
+
+
+
+               // ══════════════════════════════════ ═════════════════════
+
+
+
+
+               "</div>" +
+               "<a href='/logout' class='logout'>🚪 退出</a>" +
+               "</body></html>";
     }
 }
