@@ -5,16 +5,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpSession;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,69 +15,49 @@ import java.util.List;
 @RestController
 public class GalleryApplication {
 
-    // ============================================================
-    //  📌 配置区
-    // ============================================================
     private static final String PASSWORD = "1234";
-    private static final String IMAGE_DIR = "src/main/resources/static/images/";
 
     public static void main(String[] args) {
         SpringApplication.run(GalleryApplication.class, args);
     }
 
     // ============================================================
-    //  首页
+    //  首页：直接展示图片，不跳转！
     // ============================================================
     @GetMapping("/")
     public String home(HttpSession session) {
+        // 如果没登录，显示密码输入框
         if (session.getAttribute("login") == null) {
-            return loginPage(null);
+            return loginPage();
         }
+        // 已登录，直接显示图片页面
         return galleryPage();
     }
 
     @GetMapping("/login")
     public String loginPage() {
-        return loginPage(null);
+        return loginPageHtml(null);
     }
 
     @GetMapping("/check")
     public String check(@RequestParam String pwd, HttpSession session) {
         if (PASSWORD.equals(pwd)) {
             session.setAttribute("login", true);
-            return "redirect:/";
+            return galleryPage();  // ← 直接用 galleryPage()，不用 redirect
         }
-        return loginPage("❌ 密码错误");
+        return loginPageHtml("❌ 密码错误");
     }
 
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
-        return "redirect:/login";
+        return loginPageHtml(null);
     }
 
     // ============================================================
-    //  图片访问
+    //  密码页面
     // ============================================================
-    @GetMapping("/images/{filename}")
-    public ResponseEntity<Resource> getImage(@PathVariable String filename) {
-        try {
-            Path path = Paths.get(IMAGE_DIR + filename).normalize();
-            Resource res = new UrlResource(path.toUri());
-            if (res.exists() && res.isReadable()) {
-                return ResponseEntity.ok().body(res);
-            }
-            return ResponseEntity.notFound().build();
-        } catch (MalformedURLException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    // ============================================================
-    //  页面生成
-    // ============================================================
-
-    private String loginPage(String error) {
+    private String loginPageHtml(String error) {
         String err = error != null ? "<div style='color:#f87171;margin-top:14px'>" + error + "</div>" : "";
         return "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>密码验证</title>" +
                "<style>body{background:#0f172a;color:#fff;font-family:system-ui;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}" +
@@ -106,27 +79,46 @@ public class GalleryApplication {
                "</div></body></html>";
     }
 
+    // ============================================================
+    //  图片展示页面（直接用 HTML 写死图片列表）
+    // ============================================================
     private String galleryPage() {
-        List<String> images = getImageList();
+        // 获取图片列表
+        String path = "src/main/resources/static/images/";
+        List<String> images = new ArrayList<>();
+        File dir = new File(path);
+        if (dir.exists() && dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.isFile()) {
+                        images.add(f.getName());
+                    }
+                }
+            }
+        }
+
         StringBuilder html = new StringBuilder();
         html.append("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>图片展示</title>");
         html.append("<style>");
         html.append("body{background:#0f172a;color:#fff;font-family:system-ui;padding:30px;text-align:center;margin:0}");
-        html.append("h1{font-size:28px;font-weight:500}");
-        html.append(".gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;max-width:1000px;margin:20px auto}");
+        html.append("h1{font-size:28px;font-weight:500;margin-bottom:20px}");
+        html.append(".gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;max-width:1000px;margin:0 auto}");
         html.append(".card{background:rgba(255,255,255,0.05);border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.06)}");
         html.append(".card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}");
         html.append(".empty{color:#64748b;padding:60px 20px;font-size:18px}");
-        html.append(".logout{display:inline-block;margin-top:20px;padding:10px 30px;background:#ef4444;color:#fff;border-radius:30px;text-decoration:none}");
+        html.append(".logout{display:inline-block;margin-top:30px;padding:10px 30px;background:#ef4444;color:#fff;border-radius:30px;text-decoration:none}");
         html.append("</style></head><body>");
         html.append("<h1>📸 图片展示</h1>");
 
         if (images.isEmpty()) {
-            html.append("<div class='empty'>📭 暂无图片，请把图片放到 static/images/</div>");
+            html.append("<div class='empty'>📭 暂无图片<br>请把图片放到 <code>src/main/resources/static/images/</code></div>");
         } else {
             html.append("<div class='gallery'>");
             for (String img : images) {
-                html.append("<div class='card'><img src='/images/").append(img).append("' alt='").append(img).append("'></div>");
+                html.append("<div class='card'>");
+                html.append("<img src='/images/").append(img).append("' alt='").append(img).append("'>");
+                html.append("</div>");
             }
             html.append("</div>");
         }
@@ -134,19 +126,5 @@ public class GalleryApplication {
         html.append("<a href='/logout' class='logout'>🚪 退出</a>");
         html.append("</body></html>");
         return html.toString();
-    }
-
-    private List<String> getImageList() {
-        List<String> list = new ArrayList<>();
-        File dir = new File(IMAGE_DIR);
-        if (dir.exists() && dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    if (f.isFile()) list.add(f.getName());
-                }
-            }
-        }
-        return list;
     }
 }
